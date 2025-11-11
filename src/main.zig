@@ -413,13 +413,8 @@ const State = struct {
         var parse_diagnostics = std.ArrayList(parse.Diagnostic).init(self.allocator);
         defer parse_diagnostics.deinit();
 
-        var tree = parse.parse(self.allocator, document.source(), .{
-            .diagnostics = &parse_diagnostics,
-        }) catch |err| {
-            std.log.warn("failed to re-parse for diagnostics: {}", .{err});
-            return;
-        };
-        defer tree.deinit(self.allocator);
+        const parsed: *const Workspace.Document.CompleteParseTree = try document.parseTree();
+        try parse_diagnostics.appendSlice(parsed.diagnostics);
 
         // Convert parser diagnostics to LSP diagnostics
         const lsp_diagnostics = try self.allocator.alloc(lsp.Diagnostic, parse_diagnostics.items.len);
